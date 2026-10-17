@@ -54,17 +54,22 @@ export class OrbitRings {
     this.active = -1; // 0 inner, 1 outer, -1 none
   }
 
+  setScale(scale) {
+    for (const ring of this.rings) ring.mesh.scale.setScalar(scale);
+  }
+
   setActive(index) {
     this.active = index;
   }
 
   update(dt) {
     const k = 1 - Math.exp(-dt * RINGS.fadeSpeed);
-    this.rings.forEach((ring, i) => {
+    for (let i = 0; i < this.rings.length; i++) {
+      const ring = this.rings[i];
       const u = ring.material.uniforms;
       u.uScroll.value += ring.direction * RINGS.dashScrollSpeed * dt;
       const target = i === this.active ? RINGS.activeOpacity : RINGS.baseOpacity;
       u.uOpacity.value += (target - u.uOpacity.value) * k;
-    });
+    }
   }
 }

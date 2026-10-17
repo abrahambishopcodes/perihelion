@@ -5,7 +5,7 @@ import { SHIP } from '../config.js';
 export function checkCollisions(ship, debris, onGraze) {
   const sx = ship.position.x;
   const sz = ship.position.z;
-  for (const r of debris.rocks) {
+  for (const r of debris.all) {
     if (!r.active || r.harmless) continue;
     const dx = r.position.x - sx;
     const dz = r.position.z - sz;

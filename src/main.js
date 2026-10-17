@@ -24,6 +24,7 @@ const starfield = new Starfield(scene, renderer.getPixelRatio());
 const rings = new OrbitRings(scene);
 const planet = new Planet(scene);
 const game = new Game({ scene, rig, planet, rings });
+if (import.meta.env.DEV) window.__game = game; // for poking at the game from the console
 
 function resize() {
   const pr = Math.min(devicePixelRatio, RENDER.maxPixelRatio);

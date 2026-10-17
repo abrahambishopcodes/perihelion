@@ -1,6 +1,7 @@
-import { DIFFICULTY, GRAZE, PLANET, SCORE, SHIP, STATES } from './config.js';
+import { COMET, DIFFICULTY, GRAZE, PICKUP, PLANET, SCORE, SHIP, STATES } from './config.js';
 import { Ship } from './entities/Ship.js';
 import { Debris } from './entities/Debris.js';
+import { Pickups } from './entities/Pickup.js';
 import { Spawner } from './systems/Spawner.js';
 import { checkCollisions } from './systems/Collision.js';
 import { Hud } from './ui/Hud.js';
@@ -38,7 +39,10 @@ export class Game {
     this.rings = rings;
     this.ship = new Ship(scene);
     this.debris = new Debris(scene);
-    this.spawner = new Spawner(this.debris);
+    this.pickups = new Pickups(scene);
+    this.spawner = new Spawner(this.debris, this.pickups);
+    this.pickups.onCollect = (kind) => this.collect(kind);
+    this.debris.onCometImpact = () => this.planet.pulse(COMET.impactPulse);
     this.hud = new Hud();
 
     this.best = loadBest();
@@ -67,9 +71,12 @@ export class Game {
     this.sinceGraze = 0;
     this.slowmo = 0;
     this.orbitScale = 1;
+    this.wellTime = -1; // seconds into an active gravity well, -1 = none
     this.nextPop = SCORE.popEvery;
     this.ship.reset(this.ship.angle ?? SHIP.startAngle);
     this.debris.clear();
+    this.pickups.clear();
+    this.rings.setScale(1);
     this.spawner.reset(this.ship.angle, this.angularSpeed());
     this.hud.setScore(0);
     this.hud.setMultiplier(1);
@@ -121,6 +128,34 @@ export class Game {
     this.slowmo = GRAZE.slowmoDuration;
   }
 
+  scoreRate() {
+    return this.multiplier * (this.wellTime >= 0 ? PICKUP.wellScoreMultiplier : 1);
+  }
+
+  collect(kind) {
+    if (kind === 'shard') {
+      this.score += SCORE.shard * this.scoreRate();
+      this.hud.pop();
+    } else if (kind === 'well') {
+      this.wellTime = 0;
+    }
+  }
+
+  // Shrinks both orbits toward the planet, holds, then lets them back out.
+  updateWell(dt) {
+    if (this.wellTime < 0) return;
+    this.wellTime += dt;
+    const total = PICKUP.wellDuration;
+    const t = this.wellTime;
+    const ease = Math.min(1, t / PICKUP.wellEase, (total - t) / PICKUP.wellEase);
+    const k = Math.max(0, ease);
+    this.orbitScale = 1 + (PICKUP.wellScale - 1) * k * k * (3 - 2 * k);
+    if (t >= total) {
+      this.wellTime = -1;
+      this.orbitScale = 1;
+    }
+  }
+
   die() {
     this.setState(State.DYING);
     this.ship.group.visible = false;
@@ -166,8 +201,10 @@ export class Game {
       this.elapsed += dt;
       const speed = this.angularSpeed();
       this.ship.update(dt, speed, this.orbitScale, this.realTime);
-      this.spawner.update(this.ship.angle, speed, this.difficulty());
-      this.debris.update(dt, this.ship.angle, this.orbitScale);
+      this.updateWell(dt);
+      this.spawner.update(this.ship.angle, speed, this.difficulty(), this.elapsed);
+      this.debris.update(dt, this.ship.angle, this.orbitScale, this.realTime);
+      this.pickups.update(dt, this.ship, this.orbitScale, this.realTime);
 
       if (checkCollisions(this.ship, this.debris, this.handleGraze)) {
         this.die();
@@ -180,7 +217,7 @@ export class Game {
         this.sinceGraze = 0;
       }
 
-      this.score += SCORE.perSecond * this.multiplier * dt;
+      this.score += SCORE.perSecond * this.scoreRate() * dt;
       this.hud.setScore(this.score);
       this.hud.setMultiplier(this.multiplier);
       if (this.score >= this.nextPop) {
@@ -188,10 +225,11 @@ export class Game {
         this.hud.pop();
       }
       this.rings.setActive(this.ship.lane);
+      this.rings.setScale(this.orbitScale);
     } else if (this.state === State.DYING) {
       // The world keeps drifting while the wreck settles.
       this.ship.angle += this.angularSpeed() * dt;
-      this.debris.update(dt, this.ship.angle, this.orbitScale);
+      this.debris.update(dt, this.ship.angle, this.orbitScale, this.realTime);
       if (this.stateTime >= STATES.dyingDuration) this.gameOver();
     } else if (this.state === State.READY) {
       // Idle lap on the outer orbit behind the title.
