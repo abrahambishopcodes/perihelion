@@ -64,6 +64,7 @@ export class Ship {
     this.switchDur = 0;
     this.roll = 0;
     this.radius = ORBIT.outerRadius;
+    polar(this.angle, this.radius, this.position);
     this.group.visible = true;
   }
 

@@ -29,6 +29,7 @@ export const CAMERA = {
   breatheAmp: 0.35, // world units of slow drift
   breatheSpeed: 0.18, // rad/s
   readyOrbitSpeed: 0.05, // rad/s of slow idle yaw on READY
+  minAspect: 0.95, // narrower screens (portrait phones) pull the camera back to keep both orbits in view
 };
 
 export const PLANET = {
@@ -41,7 +42,7 @@ export const PLANET = {
   noiseSpeed: 0.12,
   rotationSpeed: 0.08,
   glowSize: 9, // additive sprite behind the planet
-  glowOpacity: 0.55,
+  glowOpacity: 0.38,
   lightIntensity: 40,
   lightDistance: 30,
   pulseDecay: 5, // per second, exponential
@@ -199,4 +200,97 @@ export const GRAZE = {
   decayAfter: 4, // seconds without a graze before the multiplier drops a step
   slowmoDuration: 0.15, // real seconds
   slowmoScale: 0.4,
+};
+
+export const POSTFX = {
+  multisampling: 4,
+  bloomIntensity: 1.2,
+  bloomThreshold: 0.2,
+  bloomSmoothing: 0.35,
+  bloomRadius: 0.72,
+  caBase: 0.0006, // chromatic aberration offset at rest
+  caMultiplier: 0.00035, // extra per multiplier step above x4
+  caMultiplierFrom: 4,
+  caModulationOffset: 0.25,
+  vignetteOffset: 0.32,
+  vignetteDarkness: 0.72,
+  grainOpacity: 0.07,
+};
+
+export const QUALITY = {
+  slowFrameMs: 20, // step down when frames stay slower than this...
+  slowFor: 2, // ...for this many seconds
+  warmup: 3, // ignore the first seconds after load or a step-down
+  storageKey: 'perihelion.quality',
+};
+
+export const TRAIL = {
+  segments: 56,
+  sampleInterval: 1 / 90, // seconds between trail points
+  width: 0.17,
+  intensity: 1.4,
+  coreWhite: 0.6, // white-hot core near the ship
+  widthPerMultiplier: 0.08, // extra width per multiplier step
+  intensityPerMultiplier: 0.09,
+  fadeOutTime: 0.5, // after death
+};
+
+export const PARTICLES = {
+  capacity: 600,
+  size: 9, // pixels at 1x pixel ratio, scaled by distance
+  drag: 2.2,
+  grazeCount: 18,
+  grazeSpeed: [2.5, 6],
+  grazeLife: [0.25, 0.5],
+  deathCount: 160,
+  deathSpeed: [2, 11],
+  deathLife: [0.6, 1.4],
+  shardCount: 14,
+  shardSpeed: [1.5, 4],
+  shardLife: [0.25, 0.5],
+  wellCount: 60,
+  impactCount: 30,
+  impactSpeed: [1, 5],
+  impactLife: [0.3, 0.7],
+};
+
+export const JUICE = {
+  hitStop: 0.06, // seconds frozen on impact
+  deathSlowmo: 0.3, // time scale while the wreck flies apart
+  deathTrauma: 0.9,
+  shardTrauma: 0.12,
+  grazeTrauma: 0.08,
+  traumaDecay: 1.6, // per second
+  shakeMax: 0.55, // world units at full trauma
+  shakeFrequency: 26,
+  caSpikeDeath: 0.012,
+  caSpikeGraze: 0.0025,
+  caDecay: 7,
+  speedPushIn: 0.1, // camera moves in by this fraction at top speed
+  deathKickBack: 0.12, // and kicks back by this on death
+  kickDecay: 2.5,
+};
+
+export const AUDIO = {
+  master: 0.7,
+  muteKey: 'perihelion.muted',
+  padVolume: 0.13,
+  padFreqs: [55, 55.45, 82.6], // two detuned roots and a soft fifth
+  padFilter: 520,
+  padFilterLfoDepth: 260,
+  padFilterLfoRate: 0.07,
+  duckLevel: 0.25,
+  duckTime: 0.25,
+  beatInterval: 0.75, // seconds; the planet breathes on this beat
+  beatVolume: 0.1,
+  beatPulse: 0.12,
+  switchVolume: 0.22,
+  switchTime: 0.12,
+  grazeVolume: 0.2,
+  grazeBase: 523.25, // C5
+  pentatonic: [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24],
+  shardVolume: 0.18,
+  shardNotes: [1318.5, 1975.5], // E6, B6
+  deathVolume: 0.5,
+  wellVolume: 0.3,
 };

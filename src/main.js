@@ -1,40 +1,84 @@
 import * as THREE from 'three';
-import { COLORS, INPUT, LOOP, RENDER } from './config.js';
+import { COLORS, INPUT, LOOP, QUALITY, RENDER } from './config.js';
 import { CameraRig } from './render/CameraRig.js';
 import { Starfield } from './render/Starfield.js';
 import { OrbitRings } from './render/OrbitRings.js';
+import { Postfx } from './render/Postfx.js';
 import { verticalGradientTexture } from './render/textures.js';
 import { Planet } from './entities/Planet.js';
 import { Game } from './Game.js';
 import './style.css';
 
 const canvas = document.getElementById('game');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, RENDER.maxPixelRatio));
+// Antialiasing comes from the composer's multisampling instead.
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+renderer.toneMapping = THREE.NoToneMapping; // tone mapping runs in the post-processing chain
+
+// Quality levels: 0 full, 1 bloom only, 2 bloom only at pixel ratio 1.
+let quality = 0;
+try {
+  quality = Number(localStorage.getItem(QUALITY.storageKey)) || 0;
+} catch {
+  // default to full quality
+}
+if (new URLSearchParams(location.search).has('low')) quality = Math.max(quality, 1);
+
+const pixelRatio = () => Math.min(devicePixelRatio, quality >= 2 ? 1 : RENDER.maxPixelRatio);
+renderer.setPixelRatio(pixelRatio());
 renderer.setSize(innerWidth, innerHeight, false);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = RENDER.toneMappingExposure;
 
 const scene = new THREE.Scene();
 scene.background = verticalGradientTexture(COLORS.bgTop, COLORS.bgBottom);
 scene.fog = new THREE.FogExp2(COLORS.fog, RENDER.fogDensity);
 
 const rig = new CameraRig(innerWidth / innerHeight);
+const postfx = new Postfx(renderer, scene, rig.camera);
 const starfield = new Starfield(scene, renderer.getPixelRatio());
 const rings = new OrbitRings(scene);
 const planet = new Planet(scene);
-const game = new Game({ scene, rig, planet, rings });
+const game = new Game({ scene, rig, planet, rings, postfx, pixelRatio: renderer.getPixelRatio() });
 if (import.meta.env.DEV) window.__game = game; // for poking at the game from the console
 
 function resize() {
-  const pr = Math.min(devicePixelRatio, RENDER.maxPixelRatio);
+  const pr = pixelRatio();
   renderer.setPixelRatio(pr);
   renderer.setSize(innerWidth, innerHeight, false);
+  postfx.setSize(innerWidth, innerHeight);
   rig.setAspect(innerWidth / innerHeight);
   starfield.setPixelRatio(pr);
+  game.particles.setPixelRatio(pr);
 }
 addEventListener('resize', resize);
 addEventListener('orientationchange', resize);
+
+function setQuality(level, remember) {
+  quality = level;
+  postfx.setLowQuality(level >= 1);
+  game.hud.setQuality(level >= 1);
+  resize();
+  slowTime = 0;
+  warmup = QUALITY.warmup;
+  if (remember) {
+    try {
+      localStorage.setItem(QUALITY.storageKey, String(level));
+    } catch {
+      // not persisted
+    }
+  }
+}
+game.hud.onQuality = () => setQuality(quality >= 1 ? 0 : 1, true);
+
+// Step down automatically when frames stay slow.
+let slowTime = 0;
+let warmup = QUALITY.warmup;
+function watchFrameTime(frameDt) {
+  if (warmup > 0) {
+    warmup -= frameDt;
+    return;
+  }
+  slowTime = frameDt * 1000 > QUALITY.slowFrameMs ? slowTime + frameDt : 0;
+  if (slowTime >= QUALITY.slowFor && quality < 2) setQuality(quality + 1, true);
+}
 
 // Input: pointerdown for instant touch response, plus keys. Buttons in the HUD handle themselves.
 addEventListener('pointerdown', (e) => {
@@ -44,6 +88,7 @@ addEventListener('pointerdown', (e) => {
 }, { passive: false });
 addEventListener('keydown', (e) => {
   if (e.repeat || !INPUT.keys.includes(e.code)) return;
+  if (e.target.closest?.('button, a') && (e.code === 'Space' || e.code === 'Enter')) return;
   e.preventDefault();
   game.press();
 });
@@ -81,11 +126,13 @@ function frame(now) {
     }
     if (steps === LOOP.maxStepsPerFrame) acc = 0;
     game.frame(frameDt, time);
+    watchFrameTime(frameDt);
   }
-  renderer.render(scene, rig.camera);
+  postfx.render(frameDt);
   requestAnimationFrame(frame);
 }
 
+setQuality(quality, false);
 document.body.classList.add('loaded');
 requestAnimationFrame((now) => {
   last = now;

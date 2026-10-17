@@ -11,10 +11,12 @@ export class CameraRig {
     this.distanceScale = 1; // <1 pushes in, >1 kicks back
     this.offset = new THREE.Vector3(); // shake, added on top
     this.target = new THREE.Vector3(0, CAMERA.lookAtY, 0);
+    this.setAspect(aspect);
     this.update(0, 0, false);
   }
 
   setAspect(aspect) {
+    this.fit = aspect < CAMERA.minAspect ? CAMERA.minAspect / aspect : 1;
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
   }
@@ -23,7 +25,7 @@ export class CameraRig {
     if (idleOrbit) this.yaw += CAMERA.readyOrbitSpeed * dt;
 
     const pitch = CAMERA.pitchDeg * DEG;
-    const d = CAMERA.distance * this.distanceScale;
+    const d = CAMERA.distance * this.distanceScale * this.fit;
     const horiz = Math.cos(pitch) * d;
     const b = time * CAMERA.breatheSpeed;
 

@@ -173,3 +173,27 @@ body.loaded #loading { opacity: 0; }
 .hud[data-state='gameover'] .hud-over { opacity: 1; }
 .hud:not([data-state='playing']) .hud-mult { opacity: 0; }
 .hud.paused .hud-pause { opacity: 1; }
+
+.hud-controls {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: auto;
+}
+.hud-btn {
+  background: none;
+  border: 0;
+  color: var(--text);
+  opacity: 0.55;
+  cursor: pointer;
+  font: inherit;
+  padding: 6px;
+  transition: opacity 0.2s;
+}
+.hud-btn:hover, .hud-btn:focus-visible { opacity: 1; }
+.hud-btn svg { display: block; }
+.hud-quality { font-size: 10px; letter-spacing: 0.2em; padding: 2px 6px; opacity: 0.35; }
