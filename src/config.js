@@ -126,8 +126,9 @@ export const COMET = {
   travelTime: 0.4, // seconds from appearing to the outer orbit
   telegraphTime: 0.8, // warning streak shows this long before it reaches the outer orbit
   stretch: 2.4, // length / width of the body
-  tailLength: 3.2,
-  tailWidth: 0.5,
+  tailLength: 3.6,
+  tailWidth: 0.6,
+  tailIntensity: 2.4,
   telegraphWidth: 0.12,
   telegraphOpacity: 0.55,
   telegraphBlink: 9, // rad/s

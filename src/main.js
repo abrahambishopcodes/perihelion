@@ -7,6 +7,8 @@ import { Postfx } from './render/Postfx.js';
 import { verticalGradientTexture } from './render/textures.js';
 import { Planet } from './entities/Planet.js';
 import { Game } from './Game.js';
+import { PlayerCard } from './ui/PlayerCard.js';
+import { cleanAddress, saveRun, signIn, whoami } from './startng.js';
 import './style.css';
 
 const canvas = document.getElementById('game');
@@ -79,6 +81,39 @@ function watchFrameTime(frameDt) {
   slowTime = frameDt * 1000 > QUALITY.slowFrameMs ? slowTime + frameDt : 0;
   if (slowTime >= QUALITY.slowFor && quality < 2) setQuality(quality + 1, true);
 }
+
+// start.ng: who's playing, their colour on the ship, and saving runs to the leaderboard.
+cleanAddress();
+const card = new PlayerCard(game.hud.root);
+card.onSignIn = signIn;
+let who = null;
+async function refreshPlayer() {
+  const reply = await whoami();
+  if (!reply) return; // not on start.ng (e.g. local dev): play without a player
+  who = reply;
+  card.show(who);
+  const color = (who.user ?? who.guest)?.style?.primaryColor;
+  if (/^#[0-9a-f]{6}$/i.test(color ?? '')) game.ship.setAccentColor(color);
+}
+refreshPlayer();
+document.addEventListener('visibilitychange', () => !document.hidden && refreshPlayer());
+addEventListener('focus', refreshPlayer);
+
+game.onRunOver = async (run) => {
+  if (!who) return;
+  if (!who.user) {
+    game.hud.setRank('Sign in to put your runs on the leaderboard');
+    return;
+  }
+  const saved = await saveRun(run);
+  if (game.state !== 'gameover') return; // already playing again
+  if (saved?.ok) {
+    const { improved, rank } = saved.result;
+    game.hud.setRank(improved ? `New leaderboard best · #${rank}` : `Leaderboard #${rank}`);
+  } else if (saved?.error) {
+    game.hud.setRank(saved.error);
+  }
+};
 
 // Input: pointerdown for instant touch response, plus keys. Buttons in the HUD handle themselves.
 addEventListener('pointerdown', (e) => {

@@ -197,3 +197,54 @@ body.loaded #loading { opacity: 0; }
 .hud-btn:hover, .hud-btn:focus-visible { opacity: 1; }
 .hud-btn svg { display: block; }
 .hud-quality { font-size: 10px; letter-spacing: 0.2em; padding: 2px 6px; opacity: 0.35; }
+
+/* start.ng profile card */
+.player-card {
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  border-radius: 999px;
+  background: rgba(11, 16, 48, 0.72);
+  border: 1px solid rgba(77, 242, 255, 0.22);
+  box-shadow: 0 0 18px rgba(77, 242, 255, 0.12);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+  max-width: calc(100vw - 32px);
+  transition: opacity 0.3s;
+}
+.player-card[hidden] { display: none; }
+.player-face { width: 38px; height: 38px; border-radius: 50%; background: rgba(77, 242, 255, 0.15); flex: none; }
+.player-text { min-width: 0; line-height: 1.15; }
+.player-name { display: block; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-account { font-size: 11px; opacity: 0.6; }
+.player-sign-in {
+  margin-left: 4px;
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--cyan);
+  color: #05060f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.player-sign-in[hidden] { display: none; }
+.hud[data-state='playing'] .player-card { opacity: 0.35; pointer-events: none; }
+/* Keep the best score clear of the card on narrow screens. */
+@media (max-width: 520px) {
+  .hud-best { left: auto; right: max(20px, env(safe-area-inset-right)); transform: none; }
+}
+
+.hud-hint {
+  position: absolute;
+  bottom: calc(18vh - 30px);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  opacity: 0.45;
+  padding: 0 16px;
+}

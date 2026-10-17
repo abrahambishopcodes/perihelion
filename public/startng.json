@@ -1,0 +1,9 @@
+{
+  "leaderboard": {
+    "stats": [
+      { "key": "score", "label": "Score", "order": "highest" },
+      { "key": "multiplier", "label": "Best multiplier", "order": "highest" },
+      { "key": "time", "label": "Time survived", "order": "highest", "format": "time" }
+    ]
+  }
+}

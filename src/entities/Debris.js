@@ -66,7 +66,8 @@ const tailFragment = /* glsl */ `
   void main() {
     float along = vUv.y;
     float across = 1.0 - abs(vUv.x - 0.5) * 2.0;
-    gl_FragColor = vec4(uColor, uOpacity * along * along * across * across);
+    float a = along * along * across * across;
+    gl_FragColor = vec4(uColor * uOpacity * a, min(1.0, uOpacity * a));
   }
 `;
 
@@ -101,7 +102,7 @@ class Comet {
     this.position = new THREE.Vector3();
     this.group = new THREE.Group();
     this.body = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), material);
-    this.tail = new THREE.Mesh(radialStrip(), stripMaterial(tailFragment, 1));
+    this.tail = new THREE.Mesh(radialStrip(), stripMaterial(tailFragment, COMET.tailIntensity));
     this.telegraph = new THREE.Mesh(radialStrip(), stripMaterial(telegraphFragment, COMET.telegraphOpacity));
     this.group.add(this.body, this.tail, this.telegraph);
     this.group.visible = false;

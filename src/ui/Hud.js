@@ -23,6 +23,7 @@ export class Hud {
     this.title = el('div', 'hud-title', this.prompt, 'PERIHELION');
     this.subtitle = el('div', 'hud-subtitle', this.prompt, 'Orbit Dodger');
     this.tap = el('div', 'hud-tap', this.prompt, 'TAP TO START');
+    this.hint = el('div', 'hud-hint', this.prompt, 'Tap to switch orbits · skim past rocks to multiply');
 
     this.over = el('div', 'hud-over', this.root);
     this.overLabel = el('div', 'hud-over-label', this.over, 'SCORE');
@@ -36,10 +37,16 @@ export class Hud {
     this.controls = el('div', 'hud-controls', this.root);
     this.mute = el('button', 'hud-btn hud-mute', this.controls);
     this.mute.type = 'button';
-    this.mute.addEventListener('click', () => this.onMute?.());
+    this.mute.addEventListener('click', () => {
+      this.mute.blur(); // keep Space for steering
+      this.onMute?.();
+    });
     this.quality = el('button', 'hud-btn hud-quality', this.controls);
     this.quality.type = 'button';
-    this.quality.addEventListener('click', () => this.onQuality?.());
+    this.quality.addEventListener('click', () => {
+      this.quality.blur();
+      this.onQuality?.();
+    });
     this.onMute = null;
     this.onQuality = null;
 
